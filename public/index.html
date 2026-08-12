@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Castillos Frozen Foods · Sistema de Ventas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Poppins:ital@1&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+<div class="app">
+
+  <header class="top">
+    <div class="brand">
+      <div class="wave">🦐</div>
+      <div>
+        <h1>Castillos Frozen Foods</h1>
+        <p>Frescura y calidad que enamoran</p>
+      </div>
+    </div>
+    <div class="right-cluster">
+      <div class="folio-badge">
+        Próximo folio<b id="nextFolioLabel">—</b>
+      </div>
+      <div class="user-badge">
+        <div class="who">
+          <b id="userNameLabel">—</b>
+          <span class="role-pill" id="userRoleLabel"></span>
+        </div>
+        <button class="logout-btn" id="logoutBtn">Salir</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="pos">Punto de venta</button>
+    <button class="tab-btn" data-tab="hist">Historial de ventas</button>
+    <button class="tab-btn" data-tab="pdfs">PDFs descargados</button>
+    <button class="tab-btn" data-tab="cat" id="catTabBtn">Catálogo</button>
+    <button class="tab-btn" data-tab="users" id="usersTabBtn">Usuarios</button>
+  </div>
+
+  <main>
+    <!-- POS -->
+    <section class="panel" id="tab-pos">
+      <div class="grid-pos">
+        <div>
+          <h2 class="section-title">Productos</h2>
+          <div class="catalog-toolbar">
+            <input id="searchProd" placeholder="Buscar producto (ej. pulpo, camarón, langosta)...">
+          </div>
+          <div class="product-grid" id="productGrid"></div>
+        </div>
+
+        <div>
+          <h2 class="section-title">Venta actual</h2>
+          <div class="cart-box">
+            <div id="cartItems"></div>
+            <div id="emptyCart" class="empty-cart">Agrega productos del catálogo para iniciar la venta.</div>
+
+            <div class="totals">
+              <div class="row total"><span>Total</span><span id="totalVal">$0.00</span></div>
+            </div>
+
+            <div style="margin-top:14px;">
+              <div class="field">
+                <label>Cliente</label>
+                <input id="custName" placeholder="Nombre del cliente o razón social">
+              </div>
+              <div class="field">
+                <label>Forma de pago</label>
+                <select id="payMethod">
+                  <option value="efectivo">Efectivo</option>
+                  <option value="tarjeta">Tarjeta</option>
+                  <option value="transferencia">Transferencia</option>
+                </select>
+              </div>
+              <div class="field">
+                <label>Notas (opcional)</label>
+                <input id="notesField" placeholder="Ej. entrega en frío, pedido especial...">
+              </div>
+            </div>
+
+            <div class="actions-row">
+              <button class="btn btn-ghost" id="clearCartBtn">Vaciar</button>
+              <button class="btn btn-accent" id="registerSaleBtn">Registrar venta y generar comprobante</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- HISTORY -->
+    <section class="panel" id="tab-hist" style="display:none;">
+      <h2 class="section-title">Historial de ventas</h2>
+      <div class="catalog-toolbar">
+        <input id="searchHist" placeholder="Buscar por folio o cliente...">
+      </div>
+      <div style="overflow-x:auto;">
+        <table class="hist">
+          <thead>
+            <tr><th>Folio</th><th>Fecha</th><th>Cliente</th><th>Pago</th><th>Total</th><th>Comprobante</th></tr>
+          </thead>
+          <tbody id="histBody"></tbody>
+        </table>
+      </div>
+      <p id="histEmpty" style="color:var(--muted);font-size:13px;display:none;">Aún no hay ventas registradas.</p>
+    </section>
+
+    <!-- PDFs -->
+    <section class="panel" id="tab-pdfs" style="display:none;">
+      <h2 class="section-title">PDFs descargados</h2>
+      <div class="catalog-toolbar">
+        <input id="searchPdf" placeholder="Buscar por folio o cliente...">
+      </div>
+      <div class="pdf-grid" id="pdfGallery"></div>
+      <p id="pdfGalleryEmpty" style="color:var(--muted);font-size:13px;display:none;">Aún no has descargado ningún comprobante. Cuando descargues un PDF desde un comprobante, aparecerá aquí.</p>
+    </section>
+
+    <!-- CATALOG -->
+    <section class="panel" id="tab-cat" style="display:none;">
+      <h2 class="section-title">Administrar catálogo</h2>
+      <form class="mini" id="addProdForm">
+        <input type="text" name="name" placeholder="Nombre del producto (ej. Colas de langosta)" required>
+        <input type="number" step="0.01" name="price" placeholder="Precio" required>
+        <select name="unit">
+          <option value="kg">kg</option>
+          <option value="pieza">pieza</option>
+          <option value="caja">caja</option>
+          <option value="paquete">paquete</option>
+        </select>
+        <input type="text" name="icon" placeholder="Emoji (opcional)" maxlength="2" style="width:70px;">
+        <button class="btn btn-primary" type="submit">Agregar producto</button>
+      </form>
+      <div class="product-grid" id="catAdminGrid"></div>
+    </section>
+
+    <!-- USERS (admin only) -->
+    <section class="panel" id="tab-users" style="display:none;">
+      <h2 class="section-title">Usuarios del sistema</h2>
+      <form class="mini" id="addUserForm">
+        <input type="text" name="name" placeholder="Nombre completo" required>
+        <input type="text" name="username" placeholder="Usuario" required>
+        <input type="password" name="password" placeholder="Contraseña" required minlength="6">
+        <select name="role">
+          <option value="vendedor">Vendedor</option>
+          <option value="admin">Administrador</option>
+        </select>
+        <button class="btn btn-primary" type="submit">Crear usuario</button>
+      </form>
+      <div style="overflow-x:auto;">
+        <table class="hist">
+          <thead>
+            <tr><th>Nombre</th><th>Usuario</th><th>Rol</th><th>Creado</th><th></th></tr>
+          </thead>
+          <tbody id="usersBody"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+</div>
+
+<!-- Receipt Modal -->
+<div class="modal-overlay" id="receiptModal">
+  <div class="receipt" id="receiptContent">
+    <button class="close-x" id="closeReceiptBtn">✕</button>
+    <!-- filled by JS -->
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="js/api.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
